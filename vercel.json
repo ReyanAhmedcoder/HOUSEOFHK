@@ -1,16 +1,14 @@
 {
   "version": 2,
-  "name": "houseofhk",
   "builds": [
-    {
-      "src": "./index.html",
-      "use": "@vercel/static"
-    }
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "styles.css", "use": "@vercel/static" },
+    { "src": "script.js", "use": "@vercel/static" },
+    { "src": "logo.jpeg", "use": "@vercel/static" },
+    { "src": "assets/logo.jpeg", "use": "@vercel/static" },
+    { "src": "assets/logo.svg", "use": "@vercel/static" }
   ],
   "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
+    { "src": "/(.*)", "dest": "/$1" }
   ]
 }
