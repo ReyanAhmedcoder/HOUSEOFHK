@@ -1,0 +1,15 @@
+# Houseofhk
+
+A polished one-page storefront for Houseofhk with a product catalog, COD order flow, and admin management UI.
+
+## Deployment on Vercel
+
+1. Push this project to GitHub.
+2. Import the repository in Vercel.
+3. Vercel will serve the static files automatically.
+
+## Files
+- index.html — main page structure
+- styles.css — visual design and responsive layout
+- script.js — catalog, filters, order modal, and admin actions
+- vercel.json — Vercel static deployment config

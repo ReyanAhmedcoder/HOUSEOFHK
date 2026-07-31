@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Houseofhk — Luxury, Quietly Worn</title>
+<meta name="description" content="Houseofhk — luxury clothing, wallets, belts, bags and sunglasses for men and women. Cash on Delivery.">
+<link rel="icon" href="logo.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ================= HEADER ================= -->
+<header class="site-header" id="siteHeader">
+  <div class="header-inner">
+    <button class="hamburger" id="hamburgerBtn" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+
+    <a href="#top" class="brand">
+      <img src="logo.jpeg" alt="Houseofhk" class="brand-logo" onerror="this.src='assets/logo.svg'; this.onerror=null;">
+      <span class="brand-word">Houseofhk</span>
+    </a>
+
+    <nav class="main-nav" id="mainNav">
+      <div class="nav-item has-dropdown">
+        <button class="nav-link">Men</button>
+        <div class="dropdown">
+          <button data-gender="men" data-cat="clothes">Clothes</button>
+          <button data-gender="men" data-cat="wallets">Wallets</button>
+          <button data-gender="men" data-cat="belts">Belts</button>
+          <button data-gender="men" data-cat="sunglasses">Sunglasses</button>
+        </div>
+      </div>
+      <div class="nav-item has-dropdown">
+        <button class="nav-link">Women</button>
+        <div class="dropdown">
+          <button data-gender="women" data-cat="clothes">Clothes</button>
+          <button data-gender="women" data-cat="bags">Bags</button>
+          <button data-gender="women" data-cat="belts">Belts</button>
+          <button data-gender="women" data-cat="sunglasses">Sunglasses</button>
+        </div>
+      </div>
+      <a href="#shop" class="nav-link" data-shop-all>Shop All</a>
+      <a href="#story" class="nav-link">The House</a>
+      <a href="#contact" class="nav-link">Contact</a>
+    </nav>
+
+    <div class="header-right">
+      <span class="cod-chip">COD Only</span>
+    </div>
+  </div>
+</header>
+
+<div id="top"></div>
+
+<!-- ================= HERO ================= -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-content">
+    <p class="eyebrow">Est. for those who need not announce themselves</p>
+    <h1 class="hero-title">Two letters.<br>One standard.</h1>
+    <p class="hero-sub">Houseofhk crafts quiet luxury for men and women — clothing, leather goods and eyewear, delivered to your door and paid for at it.</p>
+    <div class="hero-actions">
+      <a href="#shop" class="btn btn-gold">Explore the Collection</a>
+      <a href="#contact" class="btn btn-ghost">Order via COD</a>
+    </div>
+  </div>
+  <svg class="hk-divider" viewBox="0 0 1200 60" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0,30 C300,0 350,60 600,30 C850,0 900,60 1200,30" />
+  </svg>
+</section>
+
+<!-- ================= CATEGORY TILES ================= -->
+<section class="tiles">
+  <button class="tile" data-gender="men" data-cat="all">
+    <span class="tile-eyebrow">For Him</span>
+    <span class="tile-title">Men's House</span>
+    <span class="tile-cta">Clothes · Wallets · Belts · Sunglasses</span>
+  </button>
+  <button class="tile tile-alt" data-gender="women" data-cat="all">
+    <span class="tile-eyebrow">For Her</span>
+    <span class="tile-title">Women's House</span>
+    <span class="tile-cta">Clothes · Bags · Belts · Sunglasses</span>
+  </button>
+</section>
+
+<!-- ================= SHOP ================= -->
+<section class="shop" id="shop">
+  <div class="section-heading">
+    <p class="eyebrow">The Collection</p>
+    <h2>Shop Houseofhk</h2>
+  </div>
+
+  <div class="shop-controls">
+    <div class="filter-group" id="genderFilters">
+      <button class="filter-pill active" data-gender="all">All</button>
+      <button class="filter-pill" data-gender="men">Men</button>
+      <button class="filter-pill" data-gender="women">Women</button>
+    </div>
+    <div class="filter-group" id="catFilters">
+      <button class="filter-pill active" data-cat="all">All Categories</button>
+    </div>
+  </div>
+
+  <div class="product-grid" id="productGrid">
+    <!-- products injected by JS -->
+  </div>
+
+  <p class="empty-state" id="emptyState" hidden>No pieces here yet — the House is still curating this edit.</p>
+</section>
+
+<!-- ================= STORY ================= -->
+<section class="story" id="story">
+  <div class="story-inner">
+    <p class="eyebrow">The House</p>
+    <h2>Restraint is the loudest luxury</h2>
+    <p>Every piece under Houseofhk is chosen for what it doesn't need to say. No logos shouting from the chest, no seasons rushed to market — only material, cut and finish that hold up under a closer look. We deliver to your door, and you pay when it arrives. That's the whole arrangement.</p>
+  </div>
+</section>
+
+<!-- ================= CONTACT / COD ================= -->
+<section class="contact" id="contact">
+  <div class="contact-inner">
+    <div class="contact-copy">
+      <p class="eyebrow">Ordering</p>
+      <h2>Cash on Delivery, always</h2>
+      <p>Houseofhk accepts <strong>Cash on Delivery only</strong>. Choose your piece, place your order, and settle payment in person when it reaches you — no cards, no advance transfers.</p>
+      <p class="contact-owner"><strong>Owner:</strong> Rayyan Haider Farooqui<br><strong>Address:</strong> Kolkata, Pin - 700039</p>
+      <ul class="contact-list">
+        <li><span>Email</span><a href="mailto:rayyanhaiderfarooqui@gmail.com">rayyanhaiderfarooqui@gmail.com</a></li>
+        <li><span>Phone</span><a href="tel:+918981224354">+91 89812 24354</a></li>
+        <li><span>Payment</span><a href="#" class="no-link">Cash on Delivery (COD) Only</a></li>
+      </ul>
+    </div>
+    <div class="contact-note">
+      <h3>How an order works</h3>
+      <ol>
+        <li>Pick a piece and press <em>Order Now via COD</em></li>
+        <li>Share your name, phone and delivery address</li>
+        <li>We confirm by call or WhatsApp</li>
+        <li>Pay in cash when your order arrives</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <img src="logo.jpeg" alt="Houseofhk" class="brand-logo" onerror="this.src='assets/logo.svg'; this.onerror=null;">
+      <p>Houseofhk</p>
+    </div>
+    <div class="footer-links">
+      <a href="#shop">Shop</a>
+      <a href="#story">The House</a>
+      <a href="#contact">Contact</a>
+      <button id="adminTrigger" class="admin-trigger">Admin</button>
+    </div>
+    <p class="footer-legal">&copy; <span id="year"></span> Houseofhk. All rights reserved. Payments accepted via Cash on Delivery only.</p>
+  </div>
+</footer>
+
+<!-- ================= ORDER MODAL ================= -->
+<div class="modal-overlay" id="orderOverlay">
+  <div class="modal order-modal">
+    <button class="modal-close" data-close-order>&times;</button>
+    <p class="eyebrow">Order via Cash on Delivery</p>
+    <div class="order-product" id="orderProductSummary"></div>
+
+    <form id="orderForm" class="order-form">
+      <label>Full Name
+        <input type="text" name="name" required placeholder="Your full name">
+      </label>
+      <label>Phone Number
+        <input type="tel" name="phone" required placeholder="10-digit mobile number" pattern="[0-9+ ]{7,15}">
+      </label>
+      <label>Delivery Address
+        <textarea name="address" required placeholder="House / street, city, state, PIN"></textarea>
+      </label>
+      <label>Quantity
+        <input type="number" name="qty" min="1" value="1" required>
+      </label>
+      <p class="cod-note">You will pay in cash when your order is delivered. No online payment is required.</p>
+      <button type="submit" class="btn btn-gold btn-block">Place Order — Pay on Delivery</button>
+    </form>
+
+    <div class="order-confirm" id="orderConfirm" hidden>
+      <p class="confirm-title">Order noted.</p>
+      <p>Confirm with the House on WhatsApp or email so we can prepare your delivery.</p>
+      <div class="confirm-actions">
+        <a id="waLink" href="#" target="_blank" class="btn btn-gold">Confirm on WhatsApp</a>
+        <a id="mailLink" href="#" class="btn btn-ghost">Confirm by Email</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= ADMIN MODAL ================= -->
+<div class="modal-overlay" id="adminOverlay">
+  <div class="modal admin-modal">
+    <button class="modal-close" data-close-admin>&times;</button>
+
+    <div id="adminLoginView">
+      <p class="eyebrow">Admin Access</p>
+      <h3>Enter the House Key</h3>
+      <form id="adminLoginForm">
+        <input type="password" id="adminPassword" placeholder="Password" required autocomplete="off">
+        <button type="submit" class="btn btn-gold btn-block">Unlock Admin</button>
+        <p class="admin-error" id="adminError" hidden>Incorrect password.</p>
+      </form>
+    </div>
+
+    <div id="adminPanelView" hidden>
+      <p class="eyebrow">Admin — Edit Mode</p>
+      <h3>Manage Products</h3>
+
+      <form id="addProductForm" class="admin-add-form">
+        <input type="text" name="name" placeholder="Product name" required>
+        <input type="number" name="price" placeholder="Price (₹)" min="1" required>
+        <select name="gender" required>
+          <option value="" disabled selected>Gender</option>
+          <option value="men">Men</option>
+          <option value="women">Women</option>
+        </select>
+        <select name="category" id="adminCategorySelect" required>
+          <option value="" disabled selected>Category</option>
+        </select>
+        <input type="file" name="image" accept="image/*" required>
+        <button type="submit" class="btn btn-gold">Add Product</button>
+      </form>
+
+      <div class="admin-product-list" id="adminProductList"></div>
+
+      <div class="admin-orders-section">
+        <div class="admin-section-header">
+          <h4>Recent Orders</h4>
+          <p>Customer details and delivery info</p>
+        </div>
+        <div class="admin-order-list" id="adminOrderList"></div>
+      </div>
+
+      <button id="adminLogout" class="btn btn-ghost btn-block">Log Out of Admin</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
