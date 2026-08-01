@@ -49,31 +49,25 @@ let products = [];
 let orders = [];
 let activeFilters = { gender: "all", category: "all" };
 let selectedProductForOrder = null;
-let firebaseDb = null;
-let productsRef = null;
-let ordersRef = null;
 let remoteStorageReady = false;
+let remoteSyncTimer = null;
 
 /* ---------------- Storage helpers ---------------- */
 function initializeSharedStorage() {
-  if (remoteStorageReady || !FIREBASE_CONFIG || typeof window.firebase === "undefined") {
-    return remoteStorageReady;
-  }
+  if (remoteStorageReady) return true;
+  if (!FIREBASE_CONFIG || !FIREBASE_CONFIG.databaseURL) return false;
 
-  try {
-    const app = window.firebase.apps && window.firebase.apps.length
-      ? window.firebase.apps[0]
-      : window.firebase.initializeApp(FIREBASE_CONFIG);
+  remoteStorageReady = true;
+  return true;
+}
 
-    firebaseDb = window.firebase.database(app);
-    productsRef = firebaseDb.ref("hohk/products");
-    ordersRef = firebaseDb.ref("hohk/orders");
-    remoteStorageReady = true;
-    return true;
-  } catch (error) {
-    console.error("Unable to initialize shared storage.", error);
-    return false;
-  }
+function getDatabaseBaseUrl() {
+  return (FIREBASE_CONFIG && FIREBASE_CONFIG.databaseURL || "").replace(/\/$/, "");
+}
+
+function getDatabaseUrlForPath(path) {
+  const normalizedPath = String(path || "").replace(/^\/+|\/+$/g, "");
+  return `${getDatabaseBaseUrl()}/${normalizedPath}.json`;
 }
 
 function getStoredOrders() {
@@ -101,14 +95,18 @@ function normalizeRemoteListData(value) {
 }
 
 async function readFromSharedDatabase(paths) {
-  if (!initializeSharedStorage() || !firebaseDb) {
+  if (!initializeSharedStorage()) {
     return null;
   }
 
   for (const path of paths) {
     try {
-      const snapshot = await firebaseDb.ref(path).once("value");
-      const value = snapshot.val();
+      const response = await fetch(getDatabaseUrlForPath(path), { method: "GET" });
+      if (!response.ok) {
+        continue;
+      }
+
+      const value = await response.json();
       if (value !== null && value !== undefined) {
         return { path, value };
       }
@@ -121,12 +119,23 @@ async function readFromSharedDatabase(paths) {
 }
 
 async function writeToSharedDatabase(paths, data) {
-  if (!initializeSharedStorage() || !firebaseDb) {
+  if (!initializeSharedStorage()) {
     return false;
   }
 
   try {
-    await Promise.all(paths.map((path) => firebaseDb.ref(path).set(data)));
+    for (const path of paths) {
+      const response = await fetch(getDatabaseUrlForPath(path), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        return false;
+      }
+    }
+
     return true;
   } catch (error) {
     console.error("Failed to write shared data.", error);
@@ -134,42 +143,47 @@ async function writeToSharedDatabase(paths, data) {
   }
 }
 
-function subscribeToRemoteProductUpdates() {
-  if (!initializeSharedStorage() || !firebaseDb) return;
+function ensureRemoteSyncLoop() {
+  if (!initializeSharedStorage() || remoteSyncTimer) return;
 
-  FIREBASE_PRODUCT_PATHS.forEach((path) => {
-    firebaseDb.ref(path).off("value");
-    firebaseDb.ref(path).on("value", (snapshot) => {
-      const remoteProducts = normalizeRemoteListData(snapshot.val());
-      if (remoteProducts.length > 0) {
-        products = remoteProducts;
-        renderAdminProductList();
-        renderCategoryFilters();
-        renderProductGrid();
+  remoteSyncTimer = window.setInterval(async () => {
+    if (document.hidden) return;
+
+    try {
+      const productsPayload = await readFromSharedDatabase(FIREBASE_PRODUCT_PATHS);
+      if (productsPayload && productsPayload.value !== null) {
+        const remoteProducts = normalizeRemoteListData(productsPayload.value);
+        if (remoteProducts.length > 0) {
+          products = remoteProducts;
+          renderAdminProductList();
+          renderCategoryFilters();
+          renderProductGrid();
+        }
       }
-    });
-  });
-}
 
-function subscribeToRemoteOrderUpdates() {
-  if (!initializeSharedStorage() || !ordersRef) return;
-
-  FIREBASE_ORDER_PATHS.forEach((path) => {
-    firebaseDb.ref(path).off("value");
-    firebaseDb.ref(path).on("value", (snapshot) => {
-      const remoteOrders = normalizeRemoteListData(snapshot.val());
-      if (remoteOrders.length > 0 || snapshot.val() === null) {
-        orders = remoteOrders;
+      const ordersPayload = await readFromSharedDatabase(FIREBASE_ORDER_PATHS);
+      if (ordersPayload && ordersPayload.value !== null) {
+        orders = normalizeRemoteListData(ordersPayload.value);
         if (document.getElementById("adminPanelView") && document.getElementById("adminPanelView").hidden === false) {
           renderAdminOrderList();
         }
       }
-    });
-  });
+    } catch (error) {
+      console.error("Failed to refresh shared data.", error);
+    }
+  }, 4000);
+}
+
+function subscribeToRemoteProductUpdates() {
+  ensureRemoteSyncLoop();
+}
+
+function subscribeToRemoteOrderUpdates() {
+  ensureRemoteSyncLoop();
 }
 
 async function loadProducts() {
-  if (initializeSharedStorage() && firebaseDb) {
+  if (initializeSharedStorage()) {
     try {
       const sharedData = await readFromSharedDatabase(FIREBASE_PRODUCT_PATHS);
       if (sharedData && sharedData.value !== null) {
@@ -213,7 +227,7 @@ async function saveProducts() {
 }
 
 async function loadOrders() {
-  if (initializeSharedStorage() && firebaseDb) {
+  if (initializeSharedStorage()) {
     try {
       const sharedData = await readFromSharedDatabase(FIREBASE_ORDER_PATHS);
       if (sharedData && sharedData.value !== null) {
