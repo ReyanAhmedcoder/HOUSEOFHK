@@ -1,4 +1,4 @@
-window.HOHK_FIREBASE_CONFIG = {
+const firebaseConfig = {
   apiKey: "AIzaSyB7i73Q-pVAeYOOizSLJd1YJk7XcaC5GJ4",
   authDomain: "houseofhk.firebaseapp.com",
   databaseURL: "https://houseofhk-default-rtdb.firebaseio.com",

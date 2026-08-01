@@ -10,9 +10,19 @@ const ORDERS_STORAGE_KEY = "hohk_orders";
 const ADMIN_PASSWORD = "houseofhkbyrayyan";
 const WHATSAPP_NUMBER = "918981224354"; // country code + number
 const CONTACT_EMAIL = "rayyanhaiderfarooqui@gmail.com";
-const FIREBASE_CONFIG = (typeof window !== "undefined" && (window.HOHK_FIREBASE_CONFIG || window.firebaseConfig || firebaseConfig || null)) || null;
-if (typeof window !== "undefined" && FIREBASE_CONFIG && !window.HOHK_FIREBASE_CONFIG) {
-  window.HOHK_FIREBASE_CONFIG = FIREBASE_CONFIG;
+const FIREBASE_CONFIG = (typeof window !== "undefined" && (
+  window.HOHK_FIREBASE_CONFIG ||
+  window.firebaseConfig ||
+  (typeof firebaseConfig !== "undefined" ? firebaseConfig : null) ||
+  null
+)) || null;
+if (typeof window !== "undefined" && FIREBASE_CONFIG) {
+  if (!window.HOHK_FIREBASE_CONFIG) {
+    window.HOHK_FIREBASE_CONFIG = FIREBASE_CONFIG;
+  }
+  if (!window.firebaseConfig) {
+    window.firebaseConfig = FIREBASE_CONFIG;
+  }
 }
 const FIREBASE_PRODUCT_PATHS = ["hohk/products", "hohk/admin/products", "products", "admin/products"];
 const FIREBASE_ORDER_PATHS = ["hohk/orders", "hohk/admin/orders", "orders", "admin/orders"];
