@@ -1,13 +1,16 @@
 /* ================================================================
    HOUSEOFHK — store logic
-   Products persist in localStorage under key "hohk_products".
+   Products and orders persist in localStorage by default and can
+   sync to Firebase Realtime Database when configured.
    Admin password: houseofhkbyrayyan
    ================================================================ */
 
 const STORAGE_KEY = "hohk_products";
+const ORDERS_STORAGE_KEY = "hohk_orders";
 const ADMIN_PASSWORD = "houseofhkbyrayyan";
 const WHATSAPP_NUMBER = "918981224354"; // country code + number
 const CONTACT_EMAIL = "rayyanhaiderfarooqui@gmail.com";
+const FIREBASE_CONFIG = window.HOHK_FIREBASE_CONFIG || null;
 
 const CATEGORY_LABELS = {
   clothes: "Clothes",
@@ -41,27 +44,144 @@ const DEFAULT_PRODUCTS = [
 
 /* ---------------- State ---------------- */
 let products = [];
+let orders = [];
 let activeFilters = { gender: "all", category: "all" };
 let selectedProductForOrder = null;
+let firebaseDb = null;
+let productsRef = null;
+let ordersRef = null;
+let remoteStorageReady = false;
 
 /* ---------------- Storage helpers ---------------- */
-function loadProducts() {
+function initializeSharedStorage() {
+  if (remoteStorageReady || !FIREBASE_CONFIG || typeof window.firebase === "undefined") {
+    return remoteStorageReady;
+  }
+
+  try {
+    const app = window.firebase.apps && window.firebase.apps.length
+      ? window.firebase.apps[0]
+      : window.firebase.initializeApp(FIREBASE_CONFIG);
+
+    firebaseDb = window.firebase.database(app);
+    productsRef = firebaseDb.ref("hohk/products");
+    ordersRef = firebaseDb.ref("hohk/orders");
+    remoteStorageReady = true;
+    return true;
+  } catch (error) {
+    console.error("Unable to initialize shared storage.", error);
+    return false;
+  }
+}
+
+function getStoredOrders() {
+  try {
+    return JSON.parse(localStorage.getItem(ORDERS_STORAGE_KEY) || "[]");
+  } catch (error) {
+    console.error("Failed to load orders from local storage.", error);
+    return [];
+  }
+}
+
+function subscribeToRemoteProductUpdates() {
+  if (!initializeSharedStorage() || !productsRef) return;
+
+  productsRef.off("value");
+  productsRef.on("value", (snapshot) => {
+    const remoteProducts = snapshot.val();
+    if (Array.isArray(remoteProducts)) {
+      products = remoteProducts;
+      renderAdminProductList();
+      renderCategoryFilters();
+      renderProductGrid();
+    }
+  });
+}
+
+function subscribeToRemoteOrderUpdates() {
+  if (!initializeSharedStorage() || !ordersRef) return;
+
+  ordersRef.off("value");
+  ordersRef.on("value", (snapshot) => {
+    const remoteOrders = snapshot.val();
+    orders = Array.isArray(remoteOrders) ? remoteOrders : [];
+    if (document.getElementById("adminPanelView") && document.getElementById("adminPanelView").hidden === false) {
+      renderAdminOrderList();
+    }
+  });
+}
+
+async function loadProducts() {
+  if (initializeSharedStorage() && productsRef) {
+    try {
+      const snapshot = await productsRef.once("value");
+      const remoteProducts = snapshot.val();
+      if (Array.isArray(remoteProducts) && remoteProducts.length > 0) {
+        products = remoteProducts;
+      } else {
+        products = [...DEFAULT_PRODUCTS];
+        await saveProducts();
+      }
+      subscribeToRemoteProductUpdates();
+      return;
+    } catch (error) {
+      console.error("Failed to load products from shared storage, falling back to local storage.", error);
+    }
+  }
+
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       products = JSON.parse(raw);
     } else {
       products = [...DEFAULT_PRODUCTS];
-      saveProducts();
+      await saveProducts();
     }
-  } catch (e) {
-    console.error("Failed to load products, resetting to defaults.", e);
+  } catch (error) {
+    console.error("Failed to load products, resetting to defaults.", error);
     products = [...DEFAULT_PRODUCTS];
   }
 }
 
-function saveProducts() {
+async function saveProducts() {
+  if (initializeSharedStorage() && productsRef) {
+    try {
+      await productsRef.set(products);
+      return;
+    } catch (error) {
+      console.error("Failed to sync products remotely.", error);
+    }
+  }
+
   localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+}
+
+async function loadOrders() {
+  if (initializeSharedStorage() && ordersRef) {
+    try {
+      const snapshot = await ordersRef.once("value");
+      orders = Array.isArray(snapshot.val()) ? snapshot.val() : [];
+      subscribeToRemoteOrderUpdates();
+      return;
+    } catch (error) {
+      console.error("Failed to load orders from shared storage, falling back to local storage.", error);
+    }
+  }
+
+  orders = getStoredOrders();
+}
+
+async function saveOrders() {
+  if (initializeSharedStorage() && ordersRef) {
+    try {
+      await ordersRef.set(orders);
+      return;
+    } catch (error) {
+      console.error("Failed to sync orders remotely.", error);
+    }
+  }
+
+  localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
 }
 
 function formatPrice(n) {
@@ -293,11 +413,10 @@ function setupOrderModal() {
     form.hidden = true;
     document.getElementById("orderConfirm").hidden = false;
 
-    // keep a lightweight local record of orders for reference
+    // keep a shared record of orders for reference across devices
     try {
-      const orders = JSON.parse(localStorage.getItem("hohk_orders") || "[]");
       orders.push({ product: product.name, qty, total, name, phone, address, date: new Date().toISOString() });
-      localStorage.setItem("hohk_orders", JSON.stringify(orders));
+      saveOrders();
       if (document.getElementById("adminPanelView") && document.getElementById("adminPanelView").hidden === false) {
         renderAdminOrderList();
       }
@@ -366,7 +485,7 @@ function setupAdmin() {
 
     const id = "custom-" + Date.now();
     products.push({ id, gender, category, name, price, image });
-    saveProducts();
+    await saveProducts();
 
     renderAdminProductList();
     renderCategoryFilters();
@@ -417,9 +536,9 @@ function renderAdminProductList() {
       </div>
       <button data-remove-id="${escapeAttr(p.id)}">Remove</button>
     `;
-    row.querySelector("button").addEventListener("click", () => {
+    row.querySelector("button").addEventListener("click", async () => {
       products = products.filter((prod) => prod.id !== p.id);
-      saveProducts();
+      await saveProducts();
       renderAdminProductList();
       renderCategoryFilters();
       renderProductGrid();
@@ -438,11 +557,12 @@ function renderAdminOrderList() {
   const list = document.getElementById("adminOrderList");
   list.innerHTML = "";
 
-  let orders = [];
-  try {
-    orders = JSON.parse(localStorage.getItem("hohk_orders") || "[]");
-  } catch (err) {
-    console.error("Failed to load orders", err);
+  if (orders.length === 0) {
+    try {
+      orders = getStoredOrders();
+    } catch (err) {
+      console.error("Failed to load orders", err);
+    }
   }
 
   if (orders.length === 0) {
@@ -470,10 +590,11 @@ function renderAdminOrderList() {
 /* ================================================================
    INIT
    ================================================================ */
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("year").textContent = new Date().getFullYear();
 
-  loadProducts();
+  await loadProducts();
+  await loadOrders();
   renderCategoryFilters();
   renderProductGrid();
   setupNav();
