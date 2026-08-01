@@ -196,7 +196,8 @@ async function loadProducts() {
       }
 
       products = [...DEFAULT_PRODUCTS];
-      await saveProducts();
+      await writeToSharedDatabase(["hohk/products"], products);
+      await writeToSharedDatabase(["products"], products);
       subscribeToRemoteProductUpdates();
       return;
     } catch (error) {
