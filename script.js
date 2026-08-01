@@ -11,8 +11,8 @@ const ADMIN_PASSWORD = "houseofhkbyrayyan";
 const WHATSAPP_NUMBER = "918981224354"; // country code + number
 const CONTACT_EMAIL = "rayyanhaiderfarooqui@gmail.com";
 const FIREBASE_CONFIG = window.HOHK_FIREBASE_CONFIG || null;
-const FIREBASE_PRODUCT_PATHS = ["hohk/products", "products"];
-const FIREBASE_ORDER_PATHS = ["hohk/orders", "orders"];
+const FIREBASE_PRODUCT_PATHS = ["hohk/products", "hohk/admin/products", "products", "admin/products"];
+const FIREBASE_ORDER_PATHS = ["hohk/orders", "hohk/admin/orders", "orders", "admin/orders"];
 
 const CATEGORY_LABELS = {
   clothes: "Clothes",
