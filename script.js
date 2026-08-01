@@ -11,6 +11,8 @@ const ADMIN_PASSWORD = "houseofhkbyrayyan";
 const WHATSAPP_NUMBER = "918981224354"; // country code + number
 const CONTACT_EMAIL = "rayyanhaiderfarooqui@gmail.com";
 const FIREBASE_CONFIG = window.HOHK_FIREBASE_CONFIG || null;
+const FIREBASE_PRODUCT_PATHS = ["hohk/products", "products"];
+const FIREBASE_ORDER_PATHS = ["hohk/orders", "orders"];
 
 const CATEGORY_LABELS = {
   clothes: "Clothes",
@@ -83,45 +85,70 @@ function getStoredOrders() {
   }
 }
 
+function normalizeRemoteListData(value) {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (value && typeof value === "object") {
+    return Object.entries(value).map(([key, entry]) => {
+      if (!entry || typeof entry !== "object") return null;
+      return entry.id ? entry : { ...entry, id: entry.id || key };
+    }).filter(Boolean);
+  }
+
+  return [];
+}
+
 function subscribeToRemoteProductUpdates() {
   if (!initializeSharedStorage() || !productsRef) return;
 
-  productsRef.off("value");
-  productsRef.on("value", (snapshot) => {
-    const remoteProducts = snapshot.val();
-    if (Array.isArray(remoteProducts)) {
-      products = remoteProducts;
-      renderAdminProductList();
-      renderCategoryFilters();
-      renderProductGrid();
-    }
+  FIREBASE_PRODUCT_PATHS.forEach((path) => {
+    firebaseDb.ref(path).off("value");
+    firebaseDb.ref(path).on("value", (snapshot) => {
+      const remoteProducts = normalizeRemoteListData(snapshot.val());
+      if (remoteProducts.length > 0) {
+        products = remoteProducts;
+        renderAdminProductList();
+        renderCategoryFilters();
+        renderProductGrid();
+      }
+    });
   });
 }
 
 function subscribeToRemoteOrderUpdates() {
   if (!initializeSharedStorage() || !ordersRef) return;
 
-  ordersRef.off("value");
-  ordersRef.on("value", (snapshot) => {
-    const remoteOrders = snapshot.val();
-    orders = Array.isArray(remoteOrders) ? remoteOrders : [];
-    if (document.getElementById("adminPanelView") && document.getElementById("adminPanelView").hidden === false) {
-      renderAdminOrderList();
-    }
+  FIREBASE_ORDER_PATHS.forEach((path) => {
+    firebaseDb.ref(path).off("value");
+    firebaseDb.ref(path).on("value", (snapshot) => {
+      const remoteOrders = normalizeRemoteListData(snapshot.val());
+      if (remoteOrders.length > 0 || snapshot.val() === null) {
+        orders = remoteOrders;
+        if (document.getElementById("adminPanelView") && document.getElementById("adminPanelView").hidden === false) {
+          renderAdminOrderList();
+        }
+      }
+    });
   });
 }
 
 async function loadProducts() {
-  if (initializeSharedStorage() && productsRef) {
+  if (initializeSharedStorage() && firebaseDb) {
     try {
-      const snapshot = await productsRef.once("value");
-      const remoteProducts = snapshot.val();
-      if (Array.isArray(remoteProducts) && remoteProducts.length > 0) {
-        products = remoteProducts;
-      } else {
-        products = [...DEFAULT_PRODUCTS];
-        await saveProducts();
+      for (const path of FIREBASE_PRODUCT_PATHS) {
+        const snapshot = await firebaseDb.ref(path).once("value");
+        const remoteProducts = normalizeRemoteListData(snapshot.val());
+        if (remoteProducts.length > 0) {
+          products = remoteProducts;
+          subscribeToRemoteProductUpdates();
+          return;
+        }
       }
+
+      products = [...DEFAULT_PRODUCTS];
+      await saveProducts();
       subscribeToRemoteProductUpdates();
       return;
     } catch (error) {
@@ -144,9 +171,9 @@ async function loadProducts() {
 }
 
 async function saveProducts() {
-  if (initializeSharedStorage() && productsRef) {
+  if (initializeSharedStorage() && firebaseDb) {
     try {
-      await productsRef.set(products);
+      await Promise.all(FIREBASE_PRODUCT_PATHS.map((path) => firebaseDb.ref(path).set(products)));
       return;
     } catch (error) {
       console.error("Failed to sync products remotely.", error);
@@ -157,12 +184,17 @@ async function saveProducts() {
 }
 
 async function loadOrders() {
-  if (initializeSharedStorage() && ordersRef) {
+  if (initializeSharedStorage() && firebaseDb) {
     try {
-      const snapshot = await ordersRef.once("value");
-      orders = Array.isArray(snapshot.val()) ? snapshot.val() : [];
-      subscribeToRemoteOrderUpdates();
-      return;
+      for (const path of FIREBASE_ORDER_PATHS) {
+        const snapshot = await firebaseDb.ref(path).once("value");
+        const remoteOrders = normalizeRemoteListData(snapshot.val());
+        if (remoteOrders.length > 0 || snapshot.val() === null) {
+          orders = remoteOrders;
+          subscribeToRemoteOrderUpdates();
+          return;
+        }
+      }
     } catch (error) {
       console.error("Failed to load orders from shared storage, falling back to local storage.", error);
     }
@@ -172,9 +204,9 @@ async function loadOrders() {
 }
 
 async function saveOrders() {
-  if (initializeSharedStorage() && ordersRef) {
+  if (initializeSharedStorage() && firebaseDb) {
     try {
-      await ordersRef.set(orders);
+      await Promise.all(FIREBASE_ORDER_PATHS.map((path) => firebaseDb.ref(path).set(orders)));
       return;
     } catch (error) {
       console.error("Failed to sync orders remotely.", error);

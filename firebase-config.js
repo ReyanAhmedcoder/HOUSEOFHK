@@ -10,4 +10,3 @@ window.HOHK_FIREBASE_CONFIG = {
 };
 
 window.firebaseConfig = window.HOHK_FIREBASE_CONFIG;
-// 
