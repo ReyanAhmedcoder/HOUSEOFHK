@@ -100,8 +100,42 @@ function normalizeRemoteListData(value) {
   return [];
 }
 
+async function readFromSharedDatabase(paths) {
+  if (!initializeSharedStorage() || !firebaseDb) {
+    return null;
+  }
+
+  for (const path of paths) {
+    try {
+      const snapshot = await firebaseDb.ref(path).once("value");
+      const value = snapshot.val();
+      if (value !== null && value !== undefined) {
+        return { path, value };
+      }
+    } catch (error) {
+      console.error(`Failed to read shared data from ${path}`, error);
+    }
+  }
+
+  return null;
+}
+
+async function writeToSharedDatabase(paths, data) {
+  if (!initializeSharedStorage() || !firebaseDb) {
+    return false;
+  }
+
+  try {
+    await Promise.all(paths.map((path) => firebaseDb.ref(path).set(data)));
+    return true;
+  } catch (error) {
+    console.error("Failed to write shared data.", error);
+    return false;
+  }
+}
+
 function subscribeToRemoteProductUpdates() {
-  if (!initializeSharedStorage() || !productsRef) return;
+  if (!initializeSharedStorage() || !firebaseDb) return;
 
   FIREBASE_PRODUCT_PATHS.forEach((path) => {
     firebaseDb.ref(path).off("value");
@@ -137,9 +171,9 @@ function subscribeToRemoteOrderUpdates() {
 async function loadProducts() {
   if (initializeSharedStorage() && firebaseDb) {
     try {
-      for (const path of FIREBASE_PRODUCT_PATHS) {
-        const snapshot = await firebaseDb.ref(path).once("value");
-        const remoteProducts = normalizeRemoteListData(snapshot.val());
+      const sharedData = await readFromSharedDatabase(FIREBASE_PRODUCT_PATHS);
+      if (sharedData && sharedData.value !== null) {
+        const remoteProducts = normalizeRemoteListData(sharedData.value);
         if (remoteProducts.length > 0) {
           products = remoteProducts;
           subscribeToRemoteProductUpdates();
@@ -171,13 +205,8 @@ async function loadProducts() {
 }
 
 async function saveProducts() {
-  if (initializeSharedStorage() && firebaseDb) {
-    try {
-      await Promise.all(FIREBASE_PRODUCT_PATHS.map((path) => firebaseDb.ref(path).set(products)));
-      return;
-    } catch (error) {
-      console.error("Failed to sync products remotely.", error);
-    }
+  if (await writeToSharedDatabase(FIREBASE_PRODUCT_PATHS, products)) {
+    return;
   }
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
@@ -186,14 +215,11 @@ async function saveProducts() {
 async function loadOrders() {
   if (initializeSharedStorage() && firebaseDb) {
     try {
-      for (const path of FIREBASE_ORDER_PATHS) {
-        const snapshot = await firebaseDb.ref(path).once("value");
-        const remoteOrders = normalizeRemoteListData(snapshot.val());
-        if (remoteOrders.length > 0 || snapshot.val() === null) {
-          orders = remoteOrders;
-          subscribeToRemoteOrderUpdates();
-          return;
-        }
+      const sharedData = await readFromSharedDatabase(FIREBASE_ORDER_PATHS);
+      if (sharedData && sharedData.value !== null) {
+        orders = normalizeRemoteListData(sharedData.value);
+        subscribeToRemoteOrderUpdates();
+        return;
       }
     } catch (error) {
       console.error("Failed to load orders from shared storage, falling back to local storage.", error);
@@ -204,13 +230,8 @@ async function loadOrders() {
 }
 
 async function saveOrders() {
-  if (initializeSharedStorage() && firebaseDb) {
-    try {
-      await Promise.all(FIREBASE_ORDER_PATHS.map((path) => firebaseDb.ref(path).set(orders)));
-      return;
-    } catch (error) {
-      console.error("Failed to sync orders remotely.", error);
-    }
+  if (await writeToSharedDatabase(FIREBASE_ORDER_PATHS, orders)) {
+    return;
   }
 
   localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
